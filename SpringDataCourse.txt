@@ -1,0 +1,49 @@
+Spring Data JPA: robustez e praticidade para criar aplicações que se integram em banco de dados
+
+@SpringBootApplication = percorre todas as anotações do projetos para executá-las. Um dos motivos para estar na main
+
+SpringApplication.run serve para rodar nossa aplicação spring
+
+datasource.url=tipo de driver:{nome do banco}://{localização}:{port}/{nome do banco de dados}
+
+naming-strategy: converte padrão java para sql. converteria camel case com underline
+Dialeto: diz qual o dialeto do banco estou querendo me comunicar pois alguns bancos possuem um dialeto específico
+
+Qual a arquitetura do Spring Data?
+
+Spring Data -> JPA -> Hibernate -> JDBC -> Driver -> Banco de Dados
+Spring Data acopla todos os componentes em um lugar só
+Quando implementamos um entity manager, fazemos:
+EntityManagerFactory emf - new EntityManagerFactory("");
+EntityManager em = emf.createEntityManager();
+
+O Spring Data já implementa isso para gente e o código já fica mais limpo. Fica mais fácil de gerenciar tudo
+
+Como popular o banco de dados criado? Através de Repository do Spring Data
+Repository -> CRUD Repository -> PaginationAndSorting Repository -> JPA Repository
+Todos esses "->" de cima são um "extends"
+
+O bom de usar Spring Data é que todos aqueles saves, findById,.. que foram implementados na JPA, já possuem uma implementação na interface CrudRepository. Então você ganha em performance e velocidade ao utilizar essas interfaces
+
+No entanto, são utilizadas Interfaces e não podemos dar new() em interfaces. Por conta disso, usamos Injeção de Dependência. O framework Spring é muito conhecido por Injeção de Dependência
+
+SpringDataApplication deve usar uma instancia de CargoRepository e precisamos injetar uma instancia de CargoRepository na SringDataApplication
+Quando utilizamos a CrudRepository, passamos dois argumentos no nosso generics: o tipo de objeto que quero utilizar e qual o tipo do meu id. Na cargo repository, será:
+public interface CargoRepository extends CrudRepository<Cargo, Integer> 
+
+Na springdataapplication, eu quero dizer que, após o meu stary, eu quero executar um outro comando. Por conta disso, faço um implements de CommandLineRunner
+
+Criamos um construtor da SpringApplication recebendo um objeto CargoRepository no qual o meu private final recebe esse objeto
+
+Após subir a application Spring, é feito um novo run que roda nova aplicação e insere o cargo na base
+
+Outros frameworks que usam Injeção de Dependência é o CDI do Jakarta EE e o Guice, da Google
+
+Conceito de dependência é um pedaço de código que necessita de outro para funcionar. É semelhante a voce trabalhar em um setor e necessitar de uma outra pessoa para executar uma ação
+
+O Inj. Depend. é muito utilizado em testes de unidade. Eu crio uma dependencia de uma outra classe e entrego essa dependencia que ela precisa para que ela realize uma determinada função. 
+Existem ferramentas como o Dependency Injection Container, que sempre que algum precisar de uma dependência, esse container passará para o objeto. É semelhante a um repositorio de dependencias. Precisa de uma conexão com banco oracle? passa uma dependencia especifica. Com Postgresql? outra dependencia
+
+Existe a Inversão de Dependência, que diz que deveríamos depender mais de Interfaces e abstrações do que de implementações específicas para ganhar flexibilidade, pois permite que você posso trocar de implementações de banco de dados ou por outras atividades.
+
+É muito importante que, quando você criar uma classe que dependa de algo, que você não instancie dentro daquela classe, e sim receba essa dependência
