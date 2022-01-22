@@ -31,7 +31,7 @@ SpringDataApplication deve usar uma instancia de CargoRepository e precisamos in
 Quando utilizamos a CrudRepository, passamos dois argumentos no nosso generics: o tipo de objeto que quero utilizar e qual o tipo do meu id. Na cargo repository, será:
 public interface CargoRepository extends CrudRepository<Cargo, Integer> 
 
-Na springdataapplication, eu quero dizer que, após o meu stary, eu quero executar um outro comando. Por conta disso, faço um implements de CommandLineRunner
+Na springdataapplication, eu quero dizer que, após o meu start, eu quero executar um outro comando. Por conta disso, faço um implements de CommandLineRunner
 
 Criamos um construtor da SpringApplication recebendo um objeto CargoRepository no qual o meu private final recebe esse objeto
 
@@ -47,3 +47,60 @@ Existem ferramentas como o Dependency Injection Container, que sempre que algum 
 Existe a Inversão de Dependência, que diz que deveríamos depender mais de Interfaces e abstrações do que de implementações específicas para ganhar flexibilidade, pois permite que você posso trocar de implementações de banco de dados ou por outras atividades.
 
 É muito importante que, quando você criar uma classe que dependa de algo, que você não instancie dentro daquela classe, e sim receba essa dependência
+
+Queremos capturar ações do cliente para saber qual operação fazer com o banco. Não queremos deixar na main pois ficará muito grande. Para isso, separamos uma classe service, que concentrará nossas ações e a lógica das nossas alterações no banco. Agora, na main, ao invés de fazermos a injeção de dependencia e fazer um construtor para a CargoRepository, fazemos o mesmo processo, mas para a service. Já na service, fazemos a injeção de dependência da CargoRepository
+
+@JoinTable é utilizado para fazer uma tabela de junção, que é uma tabela que indica o relacionamento entre duas tabelas
+O mappedBy no relationamento OneToMany serve para ver todo os ids de chave estrangeira de uma outra tabela dentro da nossa entidade proprietária
+https://qastack.com.br/programming/5478328/in-which-case-do-you-use-the-jpa-jointable-annotation
+JoinTable pode ser usado em bidirecional ManyToOne/OneToMany, unidirecional ManyToOne e OneToOne
+
+Query Creation
+https://docs.spring.io/spring-data/jpa/docs/current/reference/html/#repositories.query-methods.query-creation
+Derivated query -> a partir de um comando java, o spring data consegue criar uma query sem qualquer comando sql. ou seja, findByNome, ele faz um find pelo atributo nome da classe
+https://docs.spring.io/spring-data/jpa/docs/current/reference/html/#reference
+
+Se os nomes ficarem grandes, priorize o JPQL
+JPQL: Criar queries SQL com as entidades do Java
+Para utilizar e o Spring entender que é uma query, deve-se usar a anotação @Query e colocar a query dentro da anotação
+Caso a entidade seja composta de duas palavras, separar o atributo da entidade por um underline (_). Com o JPQL, é possível fazer todos os Join também
+
+É possível rodar native queries com o que está nativo no seu banco de dados.
+Para isso, na anotação @Query, a query fica dentro de um atributo value e é preciso setar nativeQuery = true
+Exemplo:
+    @Query(value = "SELECT * FROM funcionarios f WHERE f.data_contratacao >= :data",
+            nativeQuery = true)
+
+Para impletar paginação e ordenação nos CRUDs, basta implementar a interface PagingAndSortingRepository
+Utilizar um objeto do tipo Pageable para implementar paginação
+PageRequest.of(page, size, sort)
+- page: quantidade de páginas que deseja visualizar/selecionar
+- size: quantidade de registros
+- sort: implementação do tipo de ordenação 
+
+Para implementar o Pageable no derived query, precisa ser colocar o Pageable junto nos parâmetros do find, no qual o pageable é definido com o mesmo PageRequest.of
+
+Existem outras implementações de Repository. Repository é a implementação mãe. Na doc do spring data podem ser vista outras
+A JpaRepository trabalha muito bem com lotes, por exemplo. Cada repository tem sua especificação. 
+
+Caso eu queira ordenal, no sort que foi colocado como unsorted() inicialmente, colocamos como Sort.by(Sort.Direcion.DESC, "nome") se eu quiser ordenar de forma decrescente pelo nome 
+O unsorted() é o default
+
+Projeção: Forma de devolver ao usuário uma busca de entidades apenas com os atributos desejados. Para isso, é criado uma interface para ter esse retorno
+Tenho que criar metodos exatamente como o nome da entidade com o prefixo get e o tipo. Com isso, o spring já vai associar o retorno da native query com os atributos da minha projeção
+Para apresentar, é só fazer mais uma busca na nossa classe service apontando para essa busca
+O nome disso é Interface Based Projection
+
+Isso pode ser feito com classe também, por exemplo, uma FuncionarioDto. Uma classe dá mais trabalho de manter e criar, mas pode ser mais vantajoso pois mais métodos podem ser colocados para a view, como os métodos de formatação
+
+O Criteria API é uma forma de fazer uma query dinâmica, mas tem um problema de ser muito extenso sua construção. Podemos fazer algo parecido com o JPA
+
+No Spring JPA, uma forma de fazer queries mais dinamicas é o Specificate. Para usar, deve ser usado a interface JpaSpecificationExecutor<T>
+Todos aqueles CriteriaBuilder que existia não é necessário aqui. O specification abstrai para você
+
+Se você quiser usar um banco não relacional, não precisa colocar o driver e nem a JPA. O spring já entrega todas as dependências necessárias para acessar o banco, inclusive com repositórios específicos e não um CrudRepository
+
+Vantagens
+Criar tabelas rapidamente com entidades
+Trocar rapidamente de implementações do Crud sem quebrar a aplicação, como paginação e ordenação
+Implementar queries dinâmicas facilmente
